@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '4.2.0'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'nu.studer.jooq' version '9.0'
 }
 
 group = 'com.ram'
@@ -27,6 +28,8 @@ dependencies {
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	runtimeOnly 'org.postgresql:postgresql'
+	jooqGenerator 'org.postgresql:postgresql'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
@@ -41,4 +44,50 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+def dotenv = [:]
+def envFile = file('.env')
+if (envFile.exists()) {
+	envFile.eachLine { line ->
+		def l = line.trim()
+		if (l && !l.startsWith('#') && l.contains('=')) {
+			def parts = l.split('=', 2)
+			dotenv[parts[0].trim()] = parts[1].trim()
+		}
+	}
+}
+
+def cfg = { String key, String fallback ->
+	System.getenv(key) ?: dotenv[key] ?: fallback
+}
+
+jooq {
+	version = '3.21.9'
+
+	configurations {
+		main {
+			generateSchemaSourceOnCompilation = false
+			generationTool {
+				jdbc {
+					driver = 'org.postgresql.Driver'
+					url = cfg('DB_URL', 'jdbc:postgresql://localhost:5433/penny_db')
+					user = cfg('DB_USER', 'ram')
+					password = cfg('DB_PASSWORD', '')
+				}
+				generator {
+					name = 'org.jooq.codegen.DefaultGenerator'
+					database {
+						name = 'org.jooq.meta.postgres.PostgresDatabase'
+						inputSchema = 'public'
+						excludes = 'flyway_schema_history'
+					}
+					target {
+						packageName = 'com.ram.penny.infrastructure.persistence.generated'
+						directory = 'build/generated-src/jooq/main'
+					}
+				}
+			}
+		}
+	}
 }
