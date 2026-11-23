@@ -26,7 +26,7 @@ http://localhost:8080/actuator/health
 - The ledger is append-only: balances are never updated, they are summed.
 - Every transfer produces entries that add up to zero.
 - Money is stored as integer cents, never floating point.
-- 
+ 
 ## Roadmap
 
 - [x] Project setup with Docker Compose and profiles
