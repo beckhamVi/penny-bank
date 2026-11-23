@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'groovy'
 	id 'org.springframework.boot' version '4.2.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'nu.studer.jooq' version '9.0'
@@ -39,11 +40,49 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testImplementation 'org.spockframework:spock-core:2.5-groovy-5.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+
+	testLogging {
+		events 'started', 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
+		exceptionFormat 'full'
+		showExceptions true
+		showCauses true
+		showStackTraces true
+		showStandardStreams false
+		displayGranularity 2
+	}
+
+	addTestListener(new org.gradle.api.tasks.testing.TestListener() {
+		void beforeSuite(org.gradle.api.tasks.testing.TestDescriptor suite) {}
+		void beforeTest(org.gradle.api.tasks.testing.TestDescriptor testDescriptor) {}
+		void afterTest(org.gradle.api.tasks.testing.TestDescriptor testDescriptor,
+					   org.gradle.api.tasks.testing.TestResult result) {}
+		void afterSuite(org.gradle.api.tasks.testing.TestDescriptor descriptor,
+						org.gradle.api.tasks.testing.TestResult result) {
+			if (descriptor.parent == null) {
+				println """
+                ----------------------------------------------
+                Resultados: ${result.resultType}
+                Total:    ${result.testCount}
+                Pasaron:  ${result.successfulTestCount}
+                Fallaron: ${result.failedTestCount}
+                Omitidos: ${result.skippedTestCount}
+                Tiempo:   ${(result.endTime - result.startTime) / 1000} s
+                ----------------------------------------------
+                """.stripIndent()
+			}
+		}
+	})
+
+	reports {
+		html.required = true
+		junitXml.required = true
+	}
 }
 
 def dotenv = [:]
