@@ -26,13 +26,13 @@ http://localhost:8080/actuator/health
 - The ledger is append-only: balances are never updated, they are summed.
 - Every transfer produces entries that add up to zero.
 - Money is stored as integer cents, never floating point.
-
+- 
 ## Roadmap
 
 - [x] Project setup with Docker Compose and profiles
-- [ ] Database schema (Flyway)
-- [ ] Money value object (TDD)
-- [ ] Ledger rules (TDD)
+- [x] Database schema (Flyway)
+- [x] jOOQ code generation
+- [x] Money value object with TDD (rules: no negatives, exact cents, overflow protection)
 - [ ] Accounts and deposits
 - [ ] Atomic transfers
 - [ ] Concurrency-safe withdrawals
